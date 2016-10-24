@@ -1,28 +1,29 @@
-# Name: RasterToPolygon_Ex_02.py
-# Description: Converts a raster dataset to polygon features.
-# Requirements: None
-
-# Import system modules
+import os
 import sys
+
 import arcpy
 from arcpy import env
 
-def rastertoPolygon(datadir, raster, shapefile):
+
+def main(datadir, raster, shapefile):
+    """ converts a raster dataset to polygon feature"""
+
     # Set environment settings
     env.workspace = datadir
 
     # Set local variables
     inRaster = raster
-    outPolygons =datadir+"/"+shapefile
+    outPolygons = os.path.join(datadir, shapefile)
     field = "VALUE"
 
     # Execute RasterToPolygon
     arcpy.RasterToPolygon_conversion(inRaster, outPolygons, "NO_SIMPLIFY", field)
+
 if __name__ == '__main__':
     datadir = sys.argv[1]
     raster = sys.argv[2]
-    shapefile=sys.argv[3]
+    shapefile = sys.argv[3]
 
-    rastertoPolygon(datadir, raster, shapefile)
+    main(datadir, raster, shapefile)
 
 

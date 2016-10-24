@@ -1,36 +1,29 @@
-# Name: Dissolve_Example2.py
-# Description: Dissolve features based on common attributes
-
- 
-# Import system modules
+import os
 import sys
+
 import arcpy
 
-def dissolve(datadir,layername,Infeature,Outfeature):
+
+def main(datadir, layername, outfeature):
+    """ Dissolve features based on common attributes"""
+
     arcpy.env.workspace = datadir
      
     # Set local variables
-    inFeatures = Infeature
-    tempLayer = layername
-    #expression = arcpy.AddFieldDelimiters(inFeatures, "LANDUSE") + " <> ''"
-    outFeatureClass = datadir+"/"+Outfeature
-    dissolveFields = ["GRIDCODE"]
-     
-    # Execute MakeFeatureLayer and SelectLayerByAttribute.  This is only to exclude 
-    #  features that are not desired in the output.
-   # arcpy.MakeFeatureLayer_management(inFeatures, tempLayer)
-   # arcpy.SelectLayerByAttribute_management(tempLayer, "NEW_SELECTION", expression)
-     
+    temp_layer = layername
+
+    outfeature_class = os.path.join(datadir, outfeature)
+    dissolve_fields = ["GRIDCODE"]
+
     # Execute Dissolve using LANDUSE and TAXCODE as Dissolve Fields
-    arcpy.Dissolve_management(tempLayer, outFeatureClass, dissolveFields, "", 
+    arcpy.Dissolve_management(temp_layer, outfeature_class, dissolve_fields, "",
                               "MULTI_PART", "DISSOLVE_LINES")
 
 if __name__ == '__main__':
     datadir = sys.argv[1]
-    layername=sys.argv[2]
-    Infeature = sys.argv[3]
-    OutFeature=sys.argv[4]
+    layername = sys.argv[2]
+    outfeature = sys.argv[3]
 
-    dissolve(datadir,layername,Infeature,OutFeature)
+    main(datadir, layername, outfeature)
 
 
