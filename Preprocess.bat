@@ -50,7 +50,7 @@ Rem convert to polygons and dissolve
 rem 
 %PROPY% %ScriptDIR%rastertoPolygon.py  Main_Watershed gw.tif gw_1.shp
 rem 
-%PROPY% %ScriptDIR%dissolve.py  Main_Watershed gw_1.shp gw_1.shp gw.shp 
+%PROPY% %ScriptDIR%dissolve.py  Main_Watershed gw_1.shp gw.shp
 
 rem
 python %ScriptDIR%NHD_PreProcessor_For_Rapid_Watershed_Delineation.py C:\Users\dtarb\RWD_reg8b gw.shp id.txt fdr.tif src.tif dist.tif ad8.tif plen.tif tlen.tif gord.tif 
