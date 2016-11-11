@@ -14,10 +14,10 @@ import numpy as np
 from NHD_RWD_Utilities import complementary_gagewatershed, create_buffer
 
 
-def main(input_dir_name, watershed_id_file, p_file, src_file, dist_file, ad8_file, plen_file,
+def main(input_dir_name, watershed_file, watershed_id_file, p_file, src_file, dist_file, ad8_file, plen_file,
          tlen_file, gord_file):
     input_dir = os.path.join(input_dir_name, "Main_Watershed")
-    infile = os.path.join(input_dir, "watershed_file")
+    infile = os.path.join(input_dir, watershed_file)
     complimentary_subwatershed_file = os.path.join(input_dir_name, "Subwatershed", "Full_watershed")
     output_dir1 = os.path.join(input_dir_name, "Subwatershed")
     if not os.path.exists(input_dir):
