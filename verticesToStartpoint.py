@@ -6,7 +6,7 @@ from arcpy import env
 
 
 def main(datadir, infeature, outfeature):
-    """get the mid-points of input line features"""
+    """get the start-points of input line features"""
 
     # Set environment settings
     env.workspace = datadir
