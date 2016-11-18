@@ -25,6 +25,43 @@ def create_buffer(input_file_name, output_buffer_file, buffer_distance):
         outFeature.SetGeometry(geomBuffer)
         bufferlyr.CreateFeature(outFeature)
 
+def read_regionlist(input_dir_name, regionlistfile):
+    with open(os.path.join(input_dir_name, regionlistfile), 'r') as f:
+        lines=f.read().splitlines()
+    regions = []
+    subregions = []
+    regionfolders = []
+    for line in lines[1:]:
+        ls = line.split()
+        for sr in ls[1:]:
+            subregions.append(sr)
+            regionfolders.append("Reg" + sr)
+            regions.append(ls[0])
+    return(regions,subregions,regionfolders)
+
+def read_gageids(gageIDfile):
+    dataall = []
+    with open(gageIDfile) as f:
+        lines = f.read().splitlines()
+    for e in lines[1:]:
+        x1 = []  # id as a list
+        for x in e.split():
+            x1.append(int(x))
+        dataall.append(x1)
+    return(dataall)
+
+    with open(os.path.join(input_dir_name, regionlistfile), 'r') as f:
+        lines=f.read().splitlines()
+    regions = []
+    subregions = []
+    regionfolders = []
+    for line in lines[1:]:
+        ls = line.split()
+        for sr in ls[1:]:
+            subregions.append(sr)
+            regionfolders.append("Reg" + sr)
+            regions.append(ls[0])
+    return(regions,subregions,regionfolders)
 
 def complementary_gagewatershed(gageIDfile, num):
     data = np.loadtxt(gageIDfile, skiprows=1)
