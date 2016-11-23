@@ -126,5 +126,5 @@ def mosaic_to_Raster(input_dir_name, regionlistfile):
 
 # Note that use of .prj file below assumes gwmaster.shp file is already created following our naming in this folder
     prjfile=os.path.join(RWDDir,"gwmaster.prj")
-    arcpy.management.MosaicToNewRaster(inrasters, RWDDir, "gwgrid.tif",prjfile,"8_BIT_UNSIGNED", None, 1, "LAST", "FIRST")
+    arcpy.management.MosaicToNewRaster(inrasters, RWDDir, "gwgrid.tif",prjfile,"32_BIT_UNSIGNED", None, 1, "LAST", "FIRST")
     print("Mosaic Done")

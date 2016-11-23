@@ -72,7 +72,6 @@ def main(input_dir_name, regionlistfile):
                 catchmerge(idup)
         catchmerge(indcatch)
         print("done " + str(downidlist[indcatch][catch]))
-    print("done")
 
     # Last step Mosaic to raster
     mosaic_to_Raster(input_dir_name, regionlistfile)
@@ -82,7 +81,7 @@ def main(input_dir_name, regionlistfile):
     #print(runmosaic)
     #subprocess.check_call(runmosaic)
 
-    print("Done")
+    print("Finally Done!")
 
 
 if __name__ == '__main__':
