@@ -7,7 +7,7 @@ import fiona
 from NHD_RWD_Utilities import complementary_gagewatershed, create_buffer, read_regionlist, read_gageids
 
 
-def main(input_dir_name, regionlistfile,batfile,FirstCatchid,Repodir,Scriptdir):
+def main(input_dir_name, regionlistfile,batdir,FirstCatchid,Repodir,Scriptdir):
 
     (regions, subregions, regionfolders) = read_regionlist(input_dir_name, regionlistfile)
 
@@ -16,6 +16,10 @@ def main(input_dir_name, regionlistfile,batfile,FirstCatchid,Repodir,Scriptdir):
     catch = 1
     downcatch = 2
 
+    region_area_ids = {'01': 'NE', '02': 'MA', '03N': 'SA', '03S': 'SA', '03W': 'SA', '04': 'GL', '05': 'MS',
+                       '06': 'MS', '07': 'MS', '08': 'MS', '09': 'SR', '10L': 'MS', '10U': 'MS', '11': 'MS',
+                       '12': 'TX', '13': 'RG', '14': 'CO', '15': 'CO', '16': 'GB', '17': 'PN', '18': 'CA',
+                       '20': 'HI', '21': 'CI', '22AS': 'PI', '22GU': 'PI', '22MP': 'PI'}
     maxId = int(FirstCatchid)-1
     RWDdir = os.path.join(input_dir_name, "RWDData")
     if not os.path.exists(RWDdir):  # If RWDdir does not yet exist create it
@@ -30,9 +34,12 @@ def main(input_dir_name, regionlistfile,batfile,FirstCatchid,Repodir,Scriptdir):
         subregion=subregions[ireg]
         workfolder = os.path.join(input_dir_name,"Regions",workname)
         if os.path.exists(workfolder):  # Here the region folder exists so scan the id.txt file to get max number for next processing
-            dataall = read_gageids(os.path.join(workfolder, "id.txt"))
-            ncatch = len(dataall)
-            maxId = max(dataall[ncatch - 1][0],maxId)
+            if(os.path.isfile(os.path.join(workfolder, "id.txt"))):
+                dataall = read_gageids(os.path.join(workfolder, "id.txt"))
+                ncatch = len(dataall)
+                maxId = max(dataall[ncatch - 1][0],maxId)
+        else:
+            os.mkdir(workfolder)
 
     # Here we have done a parse over any folders present and determined the maxId of subcatchments already extracted
     # Now we do this again, but for unprocessed regions
@@ -42,18 +49,28 @@ def main(input_dir_name, regionlistfile,batfile,FirstCatchid,Repodir,Scriptdir):
         region = regions[ireg]
         subregion = subregions[ireg]
         workfolder = os.path.join(input_dir_name, "Regions", workname)
-        if not os.path.exists(workfolder):  # Here the region folder needs to be created and processed
-            os.mkdir(workfolder)
+        if not os.path.isfile(os.path.join(workfolder, "id.txt")):  # use existence of the id.txt file as indicator that the folder is done.  Otherwise process it
             catchId = maxId + 1  # Get a new catchId to start from
 
-            Flowdir=os.path.join(input_dir_name,"NHDPlusMS","NHDPlus"+region,"NHDPlusFdrFac"+subregion,"fdr")
-            NHDFlowline = os.path.join(input_dir_name,"NHDPlusMS","NHDPlus"+region,"NHDSnapshot","Hydrography","NHDFlowline.shp")
-            NHDBurn = os.path.join(input_dir_name,"NHDPlusMS","NHDPlus"+region,"NHDPlusBurnComponents","BurnLineEvent.dbf")
-            DEM =os.path.join(input_dir_name,"NHDPlusMS","NHDPlus"+region,"NHDPlusHydrodem"+subregion,"hydrodem")
-            batname = os.path.basename(batfile)
-            shutil.copy(batfile,workfolder)  # Clumsy but could not sort out paths to this
+            Flowdir=os.path.join(input_dir_name,"NHDPlus"+region_area_ids[region],"NHDPlus"+region,"NHDPlusFdrFac"+subregion,"fdr")
+            NHDFlowline = os.path.join(input_dir_name,"NHDPlus"+region_area_ids[region],"NHDPlus"+region,"NHDSnapshot","Hydrography","NHDFlowline.shp")
+            NHDBurn = os.path.join(input_dir_name,"NHDPlus"+region_area_ids[region],"NHDPlus"+region,"NHDPlusBurnComponents","BurnLineEvent.dbf")
+            DEM =os.path.join(input_dir_name,"NHDPlus"+region_area_ids[region],"NHDPlus"+region,"NHDPlusHydrodem"+subregion,"hydrodem")
+
+            # Processing split into 2 batch files so that modified fdr can be inserted
+            batfile1=os.path.join(batdir,"Preprocess1.bat")
+            batfile2 = os.path.join(batdir, "Preprocess2.bat")
+            shutil.copy(batfile1, workfolder)  # Clumsy but could not sort out paths to this
+            shutil.copy(batfile2, workfolder)
+            batname1 = os.path.basename(batfile1)
+            batname2 = os.path.basename(batfile2)
             os.chdir(workfolder)  # Change to work folder and run therein
-            runbat = batname + " " + Flowdir + " " + NHDFlowline + " " + NHDBurn + " " + DEM + " " + str(catchId) + " " + Repodir + " " + Scriptdir
+            runbat = batname1 + " " + Flowdir + " " + NHDFlowline + " " + NHDBurn + " " + DEM + " " + str(catchId) + " " + Repodir + " " + Scriptdir
+            subprocess.check_call(runbat)
+            if(os.path.isfile("fdrmod.tif")):
+                os.rename("fdr.tif","fdrorig.tif")
+                shutil.copy("fdrmod.tif","fdr.tif")
+            runbat = batname2 + " " + Flowdir + " " + NHDFlowline + " " + NHDBurn + " " + DEM + " " + str(catchId) + " " + Repodir + " " + Scriptdir
             subprocess.check_call(runbat)
 
             # Now the terrain analysis processing is done
