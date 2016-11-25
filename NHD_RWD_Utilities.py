@@ -25,7 +25,17 @@ def create_buffer(input_file_name, output_buffer_file, buffer_distance):
         outFeature.SetGeometry(geomBuffer)
         bufferlyr.CreateFeature(outFeature)
 
+# This function is also repeated in DoMergeArcPro.py because I wanted to keep Python 3 code used with ArcPy separate from Python 2 code.  Consolidation may be possible.
 def read_regionlist(input_dir_name, regionlistfile):
+    # Regionlistfile format:
+    # <header>
+    # <region> <subregion1> <subregion2>
+    # <region> <subregion3> < subregion4>
+    # etc
+    # Example
+    # Regions and subregions to use
+    # 08 08a 08b
+    # 11 11c
     with open(os.path.join(input_dir_name, regionlistfile), 'r') as f:
         lines=f.read().splitlines()
     regions = []

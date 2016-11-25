@@ -46,11 +46,11 @@ def read_Masterids(masterIDfile):
     downcatch = 2
     with open(masterIDfile) as f:
         lines = f.read().splitlines()
-    for x in lines:
-        x1 = []
-        for x2 in x.split():
-            x1.append(int(x2))
-        downidlist.append(x1)
+        for x in lines:
+            x1 = []
+            for x2 in x.split():
+                x1.append(int(x2))
+            downidlist.append(x1)
     return (downidlist)
 
 
@@ -81,6 +81,16 @@ def MergeDissolve(catchid):
     arcpy.management.Dissolve(tempoutput,output)
 
 def read_regionlist(input_dir_name, regionlistfile):
+    # Regionlistfile format:
+    # <header>
+    # <region> <subregion1> <subregion2>
+    # <region> <subregion3> < subregion4>
+    # etc
+    # Example
+    # Regions and subregions to use
+    # 08 08a 08b
+    # 11 11c
+
     with open(os.path.join(input_dir_name, regionlistfile), 'r') as f:
         lines = f.read().splitlines()
     regions = []
