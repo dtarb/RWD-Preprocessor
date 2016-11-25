@@ -54,13 +54,13 @@ def main(input_dir_name, regionlistfile):
     # Define the recursive function
     def catchmerge(idtomerge):
         if not catchdone[idtomerge]:
+            catchdone[idtomerge] = True  # Put this before recursive calls so that if this was called before it is not called again
             listtomerge = [dataind[idtomerge]]
             num = len(upidlist[idtomerge])
             if (num > 0):
                 for idup in upidlist[idtomerge]:
                     catchmerge(idup)
                     listtomerge.append(dataind[idup])
-            catchdone[idtomerge] = True
             print(listtomerge)
             Do_Merge(RWDdir, listtomerge)
 

@@ -102,9 +102,31 @@ def main(input_dir_name, regionlistfile):
                 for mf in masterlyr:
                     idfound=mf.GetField("GRIDCODE")
                     if(downidlist[dataind.index(idfound)][reg] != regionid):  # if point is in different region
-                        downidlist[i][downcatch]=idfound # set down pointer to where it is
-                        print("Downstream connection made")
-                        print("Catchment: "+ str(downidlist[i][catch])+ " to down: "+ str(idfound))
+                        # It can occur that the outlet of catchment A in region 1 is in catchment B in region 2 and that catchment B in region 2 had already been connected to catchment A in region 1
+                        # This occurs due to NHDPlus flow direcitons overlapping and being inconsistent along region edges.  This was found to occur in the Delaware estuary area at the edge of
+                        # regions 02a and 02b.
+                        # Making a connection here would result in a loop that fouls later recursion.  Check tracing down the path of the connection just found that
+                        # Trace down function
+                        def tracedown(idfound, thiscatch):
+                            connectsback=False
+                            nextdown=downidlist[dataind.index(idfound)][downcatch]
+                            if(nextdown == thiscatch ):
+                                connectsback=True
+                                return(connectsback)
+                            while(nextdown != -1):
+                                nextdown = downidlist[dataind.index(nextdown)][downcatch]
+                                if (nextdown == thiscatch):
+                                    connectsback = True
+                                    return (connectsback)
+                            return(connectsback)
+
+                        if(not tracedown(idfound,downidlist[i][catch])):
+                            downidlist[i][downcatch]=idfound # set down pointer to where it is
+                            print("Downstream connection made")
+                            print("Catchment: "+ str(downidlist[i][catch])+ " to down: "+ str(idfound))
+                        else:
+                            print("No downstream connection made as it would create a loop")
+                            print("Catchment: "+ str(downidlist[i][catch])+ " to down: "+ str(idfound))
                         if(found):
                             print("Possible error this point found previously")
                         found=True
@@ -115,64 +137,6 @@ def main(input_dir_name, regionlistfile):
     mfile.close()
     print("Done 2")
 
-    # # Now do the recursion to join shapes
-    # # make upidlist by pass through appending downid
-    # # then pass over catchments
-    # # If no catchments upstream watershed file is subwatershed file.  Flag as done
-    # # If there are catchments upstream
-    # #    go there recursively
-    # #    write subwatershed file
-    # #    write watershed file as merge of upstream watershed files
-    #
-    # #  Data structures are
-    # # downidlist. A list of lists giving [regionid, catch, catchdown] like [[0, 139, 135], [0, 140, 139]]
-    # # dataind.  A list of catchment id's for indexing, like [139, 140].  It does not have to start at 0 (0r 1)
-    # # dataind and downidlist are the same length and logically paired element to element
-    # # upidlist.  A list of indexes to upstream catchments.  Like [[0, 2],[],[3,4]].  Note that these are indexes into the position in downidlist and dataind, not the values themselves ids
-    # upidlist = []
-    # catchdone = []
-    # for thiscatch in downidlist:
-    #     x1 = []
-    #     upidlist.append(x1)  # append empty list placeholders for upid's
-    #     catchdone.append(False)
-    # # Now there are placeholder upidlist entries for each catchment that can be appended to in next pass
-    # for thiscatch in downidlist:
-    #     if (thiscatch[downcatch] > 0):  # this catchment has a downid so record this catchment as this downid's upid
-    #         upentry=dataind.index(thiscatch[downcatch])  # the index to downcatch in the overall lists
-    #         upidlist[upentry].append(dataind.index(thiscatch[catch]))  # append the index to this catchment
-    # print(upidlist)
-    #
-    # # Define the recursive function
-    # def catchmerge(idtomerge):
-    #     if not catchdone[idtomerge]:
-    #         listtomerge = [dataind[idtomerge]]
-    #         num = len(upidlist[idtomerge])
-    #         if (num > 0):
-    #             for idup in upidlist[idtomerge]:
-    #                 catchmerge(idup)
-    #                 listtomerge.append(dataind[idup])
-    #         catchdone[idtomerge] = True
-    #         print(listtomerge)
-    #         Do_Merge(RWDdir, listtomerge)
-    #
-    # # Now we do the recursive pass
-    # for indcatch in xrange(len(downidlist)):
-    #     num = len(upidlist[indcatch])
-    #     if (num > 0):
-    #         for idup in upidlist[indcatch]:
-    #             catchmerge(idup)
-    #     catchmerge(indcatch)
-    #     print("done " + str(downidlist[indcatch][catch]))
-    # print("done")
-    #
-    # # Last step Mosaic to raster
-    # PROPY = r'"C:\Program Files\ArcGIS\Pro\bin\Python\envs\arcgispro-py3\python.exe"'
-    # MosaicScript = r'"D:\Dropbox\Projects\MMW2_StroudWPenn\RWDWork\Code\RWDPreproRepo\mosaicToRaster.py"'
-    # runmosaic = PROPY + " " + MosaicScript + " " + input_dir_name + " " + regionlistfile
-    # print(runmosaic)
-    # subprocess.check_call(runmosaic)
-    #
-    # print("Done")
 
 if __name__ == '__main__':
     main(*sys.argv[1:])

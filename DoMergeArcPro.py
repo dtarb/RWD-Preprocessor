@@ -32,19 +32,8 @@ def Do_Merge(input_dir_name, mergelist):
             ff.append(os.path.join(input_dir_name, "Subwatershed_ALL", "Subwatershed%s" % id, "Full_watershed%s.shp" % id))
             f.write("%s\n" % str(id))
     f.close()
-    if(len(ff)==1):  # just one file so use ogr2ogr copy
-        ogr2ogr = "ogr2ogr " + dissolvefile + " " + ff[0]
-        print(ogr2ogr)
-        subprocess.check_call(ogr2ogr)
-    else:  # Here call arcgis merge to avoid slivers
-        os.chdir(destfolder)
-        MergeDissolve(mergelist[0])
-        #PROPY = r'"C:\Program Files\ArcGIS\Pro\bin\Python\envs\arcgispro-py3\python.exe"'
-        #MergeScript = r'"D:\Dropbox\Projects\MMW2_StroudWPenn\RWDWork\Code\RWDPreproRepo\MergeArcPro.py"'
-        #runmerge = PROPY + " " + MergeScript + " " + str(mergelist[0])
-        #print(runmerge)
-        #subprocess.check_call(runmerge)
-
+    os.chdir(destfolder)
+    MergeDissolve(mergelist[0])
     shutil.rmtree(tempdir, ignore_errors=True)
 
 def read_Masterids(masterIDfile):
@@ -71,10 +60,18 @@ def MergeDissolve(catchid):
     curwd = os.getcwd()
     env.workspace = curwd
 
+    # From doing in ArcPro
+    # arcpy.analysis.Buffer("subwatershed_1",
+    #                       r"D:\Dropbox\Projects\MMW2_StroudWPenn\RWDWork\NHDPlusTest\RWDData\Subwatershed_ALL\Subwatershed1\temp.shp",
+    #                       "1 Meters", "FULL", "ROUND", "ALL", None, "PLANAR")
+
+    insub="subwatershed_%s.shp"% catchid
+    buffersub=r"temp\buff.shp"
+    arcpy.analysis.Buffer(insub,buffersub,"1 Meters")  # Buffer each subwatershed before any merging and dissolving.  Full watersheds will then inherit the buffers
     with open("upcatchids.txt", 'r') as f:
         lines = f.read().splitlines()
     upcatchids = [int(x) for x in lines]
-    inputs="subwatershed_%s.shp"% catchid
+    inputs=os.path.join("temp","buff.shp")
     for upid in upcatchids:
         inputs=inputs+";"+os.path.join("..","Subwatershed%s" % upid,"Full_watershed%s.shp" % upid)
     tempoutput=os.path.join("temp","temp.shp")
