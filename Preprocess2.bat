@@ -33,9 +33,10 @@ mpiexec -n 4 streamnet -fel %DEM% -p fdr.tif -ad8 ad81.tif -src src1.tif -ord or
 
 mpiexec -n 4 D8HDistToStrm -p fdr.tif -src src.tif -dist dist.tif
 
-mpiexec -n 4 gridnet -p fdr.tif -plen plen.tif -tlen tlen.tif -gord gord.tif
-rem  Repeat gridnet with src as mask for stream order to report
-mpiexec -n 4 gridnet -p fdr.tif -plen plen1.tif -tlen tlen1.tif -gord ord.tif -mask src.tif -thresh 1
+rem  The only quantity used from this first result is plen so that basin length is the longest path from the divide
+mpiexec -n 4 gridnet -p fdr.tif -plen plen.tif -tlen tlen1.tif -gord gord.tif
+rem  Repeat gridnet with src as mask for stream order and tlen to report.  Tlen here is total length upstream on the stream raster so proper for drainage density.
+mpiexec -n 4 gridnet -p fdr.tif -plen plen1.tif -tlen tlen.tif -gord ord.tif -mask src.tif -thresh 1
 
 rem  Run CatchOutlets single processor, no parallel version yet
 mpiexec -n 1 CatchOutlets -net net1.shp -p fdr.tif -o CatchOutlets3.shp -mindist 20000 -minarea 50000000 -gwstartno %gwstartno%
