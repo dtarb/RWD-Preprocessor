@@ -15,7 +15,7 @@ def main(datadir, layername, outfeature):
     outfeature_class = os.path.join(datadir, outfeature)
     dissolve_fields = ["GRIDCODE"]
 
-    # Execute Dissolve using LANDUSE and TAXCODE as Dissolve Fields
+    # Execute Dissolve 
     arcpy.Dissolve_management(temp_layer, outfeature_class, dissolve_fields, "",
                               "MULTI_PART", "DISSOLVE_LINES")
 
