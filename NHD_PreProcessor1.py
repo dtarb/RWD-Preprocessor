@@ -34,7 +34,7 @@ def main(input_dir_name, regionlistfile,batdir,FirstCatchid,Repodir,Scriptdir):
         subregion=subregions[ireg]
         workfolder = os.path.join(input_dir_name,"Regions",workname)
         if os.path.exists(workfolder):  # Here the region folder exists so scan the id.txt file to get max number for next processing
-            if(os.path.isfile(os.path.join(workfolder, "id.txt"))):
+            if os.path.isfile(os.path.join(workfolder, "id.txt")):
                 dataall = read_gageids(os.path.join(workfolder, "id.txt"))
                 ncatch = len(dataall)
                 maxId = max(dataall[ncatch - 1][0],maxId)
@@ -65,11 +65,77 @@ def main(input_dir_name, regionlistfile,batdir,FirstCatchid,Repodir,Scriptdir):
             batname1 = os.path.basename(batfile1)
             batname2 = os.path.basename(batfile2)
             os.chdir(workfolder)  # Change to work folder and run therein
-            runbat = batname1 + " " + Flowdir + " " + NHDFlowline + " " + NHDBurn + " " + DEM + " " + str(catchId) + " " + Repodir + " " + Scriptdir
-            subprocess.check_call(runbat)
-            if(os.path.isfile("fdrmod.tif")):
+
+            # Skip preprocess1 if files exist
+            if not os.path.isfile("dangle_reclass.tif"):  # This is the last file in the sequence.  Assume finding it indicates the files are all there
+                runbat = batname1 + " " + Flowdir + " " + NHDFlowline + " " + NHDBurn + " " + DEM + " " + str(catchId) + " " + Repodir + " " + Scriptdir
+                subprocess.check_call(runbat)
+
+            if os.path.isfile("fdrmod.tif"):
                 os.rename("fdr.tif","fdrorig.tif")
                 shutil.copy("fdrmod.tif","fdr.tif")
+
+            # Do each TauDEM function from here
+
+            if not os.path.isfile("ad8.tif"):
+                # With edge contamination checks to use in reporting catchment areas
+                cmd="mpiexec -n 8 aread8 -p fdr.tif -ad8 ad8.tif"
+                subprocess.check_call(cmd)
+
+            if not os.path.isfile("ad81.tif"):
+                # Without edge contamination checks to use in delineating stream network for partitioning
+                cmd="mpiexec -n 8 aread8 -p fdr.tif -ad8 ad81.tif -nc"
+                subprocess.check_call(cmd)
+
+            if not os.path.isfile("ad8w.tif"):
+                # With dangle points as weight to seed delineation close to NHD mapped streams
+                cmd="mpiexec -n 8 aread8 -p fdr.tif -ad8 ad8w.tif -wg dangle_reclass.tif -nc"
+                subprocess.check_call(cmd)
+
+            if not os.path.isfile("src.tif"):
+                # run threshold single processor.  There appears to be a problem with multiprocessor no data handling
+                cmd = "mpiexec -n 1 threshold -ssa ad8w.tif -src src.tif -thresh 1"
+                subprocess.check_call(cmd)
+
+            if not os.path.isfile("src1.tif"):
+                # Threshold of 1000 is 0.9 km^2.  Smaller self draining areas will be left out
+                cmd = "mpiexec -n 1 threshold -ssa ad81.tif -src src1.tif -thresh 1000"
+                subprocess.check_call(cmd)
+
+            if not os.path.isfile("net1.shp"):
+                # Streamnet
+                cmd = 'mpiexec -n 8 streamnet -fel "' + DEM + '"  -p fdr.tif -ad8 ad81.tif -src src1.tif -ord ord1.tif -tree tree1.txt -coord coord1.txt -net net1.shp -w w1.tif'
+                subprocess.check_call(cmd)
+                # was
+                # mpiexec -n 4 streamnet -fel %DEM% -p fdr.tif -ad8 ad81.tif -src src1.tif -ord ord1.tif -tree tree1.txt -coord coord1.txt -net net1.shp -w w1.tif
+
+            if not os.path.isfile("dist.tif"):
+                # D8HDistToStrm
+                cmd = 'mpiexec -n 8 D8HDistToStrm -p fdr.tif -src src.tif -dist dist.tif'
+                subprocess.check_call(cmd)
+
+            # Gridnet
+            if not os.path.isfile("plen.tif"):
+                # The only quantity used from this first result is plen so that basin length is the longest path from the divide
+                cmd = 'mpiexec -n 8 gridnet -p fdr.tif -plen plen.tif -tlen tlen1.tif -gord gord.tif'
+                subprocess.check_call(cmd)
+
+            if not os.path.isfile("tlen.tif"):
+                # Repeat gridnet with src as mask for stream order and tlen to report.  Tlen here is total length upstream on the stream raster so proper for drainage density.
+                cmd = 'mpiexec -n 8 gridnet -p fdr.tif -plen plen1.tif -tlen tlen.tif -gord ord.tif -mask src.tif -thresh 1'
+                subprocess.check_call(cmd)
+
+            if not os.path.isfile("CatchOutlets3.shp"):
+                # Run CatchOutlets single processor, no parallel version yet.
+                cmd = 'mpiexec -n 1 CatchOutlets -net net1.shp -p fdr.tif -o CatchOutlets3.shp -mindist 20000 -minarea 50000000 -gwstartno %s' % str(catchId)
+                subprocess.check_call(cmd)
+
+            if not os.path.isfile("gw.tif"):
+                # Run CatchOutlets single processor, no parallel version yet.
+                cmd = 'mpiexec -n 8 gagewatershed -p fdr.tif -gw gw.tif -id id.txt -o CatchOutlets3.shp'
+                subprocess.check_call(cmd)
+
+            # Still execute preprocess2.bat  to do the arcpy scripts.  TauDEM scripts commented out/deleted in batch file
             runbat = batname2 + " " + Flowdir + " " + NHDFlowline + " " + NHDBurn + " " + DEM + " " + str(catchId) + " " + Repodir + " " + Scriptdir
             subprocess.check_call(runbat)
 
