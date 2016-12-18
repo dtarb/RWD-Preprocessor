@@ -80,6 +80,20 @@ def MergeDissolve(catchid):
     arcpy.management.Merge(inputs,tempoutput)
     arcpy.management.Dissolve(tempoutput,output)
 
+def ElimPolyPart(catchid):
+    """ Eliminate polygon parts"""
+
+    curwd = os.getcwd()
+    env.workspace = curwd
+
+    # From doing in ArcPro
+    # arcpy.management.EliminatePolygonPart("New_Point_Watershed", r"D:\RWD\NHDPlus\DelineatedWatershedCo\simpw.shp", "PERCENT", "0 SquareMeters", 99, "CONTAINED_ONLY")
+
+    input = "Full_watershed%s.shp" % catchid
+    output = "Simple_watershed%s.shp" % catchid
+    arcpy.management.EliminatePolygonPart(input, output,"PERCENT", "0 SquareMeters", 99, "CONTAINED_ONLY")
+
+
 def read_regionlist(input_dir_name, regionlistfile):
     # Regionlistfile format:
     # <header>
