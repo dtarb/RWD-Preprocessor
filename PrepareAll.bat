@@ -1,5 +1,5 @@
-set RepoScriptDIR=D:\Dropbox\Projects\MMW2_StroudWPenn\RWDWork\Code\RWDPreproRepo\
-set RWDScriptDir=D:\Dropbox\Projects\MMW2_StroudWPenn\RWDWork\Code\RWDScripts\
+set RepoScriptDIR=C:\Users\dtarb\Code\RWDPreproRepo\
+set RWDScriptDir=C:\Users\dtarb\Code\RWDScripts\
 set PY27="C:\Python27\python.exe"
 set PROPY="C:\Program Files\ArcGIS\Pro\bin\Python\envs\arcgispro-py3\python.exe"
 set DataDir=%1
